@@ -1,4 +1,4 @@
-/* VP Engineers — site behaviour */
+/* VP Engineer — site behaviour */
 (function () {
   'use strict';
 
@@ -198,8 +198,8 @@
     var name = form.elements.name.value.trim();
     if (!name) { form.elements.name.focus(); form.elements.name.setAttribute('aria-invalid', 'true'); return; }
     form.elements.name.removeAttribute('aria-invalid');
-    var text = 'Hello VP Engineers,\n\nName: ' + name + '\nProject type: ' + form.elements.type.value +
-      (form.elements.msg.value.trim() ? '\nDetails: ' + form.elements.msg.value.trim() : '') + '\n\n(Sent from vp-engineers website)';
+    var text = 'Hello VP Engineer,\n\nName: ' + name + '\nProject type: ' + form.elements.type.value +
+      (form.elements.msg.value.trim() ? '\nDetails: ' + form.elements.msg.value.trim() : '') + '\n\n(Sent from VP Engineer website)';
     window.open(WA + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
   });
 })();

@@ -1,5 +1,5 @@
 /*
- * VP Engineers — "From Ground to Home" construction scene.
+ * VP Engineer — "From Ground to Home" construction scene.
  *
  * Builds one SVG drawing (1000 × 640, elevation + soil section) whose layers
  * are revealed by scroll progress. Every layer is a <g class="jx"> with:

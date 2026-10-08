@@ -1,5 +1,5 @@
 /*
- * VP Engineers — Projects & Experience
+ * VP Engineer — Projects & Experience
  *
  * HOW TO ADD A PROJECT
  * 1. Put the photo in /assets/projects/ (WebP or JPG, ~1600px wide is plenty).

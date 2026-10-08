@@ -1,6 +1,6 @@
-# VP Engineers — Website
+# VP Engineer — Website
 
-Single-page website for **VP Engineers — Versatile In Profession** (Erode, Tamil Nadu).
+Single-page website for **VP Engineer — Versatile In Profession** (Erode, Tamil Nadu).
 Proprietor: J. Tamil Selvan, M.E. (Structural Engineering).
 
 Plain static HTML/CSS/JS — no build step — deployed on Vercel.
