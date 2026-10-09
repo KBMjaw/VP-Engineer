@@ -1,16 +1,32 @@
 /*
- * VP Engineer — "From Ground to Home" construction scene.
+ * VP Engineer — "From Ground to Home" construction drawing.
  *
- * Builds one SVG drawing (1000 × 640, elevation + soil section) whose layers
- * are revealed by scroll progress. Every layer is a <g class="jx"> with:
- *   data-s  stage index (0–11) the layer belongs to
+ * Builds one SVG (1000 × 640, elevation + soil section). Each layer is a
+ * <g class="jx"> with:
+ *   data-s  stage index (0–12) the layer belongs to
  *   data-t  point inside that stage (0–1) at which it appears
  *   data-u  (optional) absolute progress at which it disappears again
- * main.js toggles the `.on` class from the current scroll progress.
+ * Journey.tsx toggles the `.on` class from scroll progress.
+ *
+ * The drawing was authored on a 12-stage timeline; mapAbs() converts it to
+ * the 13 stages shown on the site:
+ *   0 Plot · 1 Planning · 2 Survey & marking · 3 Excavation · 4 Foundation ·
+ *   5 Frame · 6 Brickwork · 7 Slab & roof · 8 Electrical & plumbing ·
+ *   9 Plaster & flooring · 10 Paint & interiors · 11 Completed · 12 Handover
  */
-(function () {
-  'use strict';
 
+/** Interior scene takes over from this point of stage 10. */
+export const INTERIOR_FROM = 10.35;
+export const STAGE_COUNT = 13;
+
+function mapAbs(p) {
+  if (p < 6) return p;                       // plot … frame unchanged
+  if (p < 9) return p + 1;                   // roof, services, finishing shift by one
+  if (p < 10) return INTERIOR_FROM + (p - 9) * 0.65; // interiors share stage 10
+  return p + 1;                              // completed, handover
+}
+
+export function buildScene() {
   var Y = '#FFD400', INK = '#111', CON = '#b9b9b6', CON2 = '#a3a3a0';
   var GROUND = 470;
   var COLS = [300, 433, 567, 700];          // column centre lines
@@ -18,9 +34,15 @@
   var GF = [330, 455], FF = [190, 316];       // wall heights between slabs
 
   // -- helpers -------------------------------------------------------------
+  // L(): place a layer directly on the 13-stage timeline.
+  function L(s, t, cls, inner, u, extra) {
+    return '<g class="jx ' + (cls || 'fade') + '" data-s="' + s + '" data-t="' + (+(t || 0)).toFixed(3) + '"' +
+      (u !== undefined ? ' data-u="' + (+u).toFixed(3) + '"' : '') + (extra ? ' ' + extra : '') + '>' + inner + '</g>';
+  }
+  // layer(): authored on the original 12-stage timeline, remapped via mapAbs().
   function layer(s, t, cls, inner, u, extra) {
-    return '<g class="jx ' + (cls || 'fade') + '" data-s="' + s + '" data-t="' + (t || 0) + '"' +
-      (u !== undefined ? ' data-u="' + u + '"' : '') + (extra ? ' ' + extra : '') + '>' + inner + '</g>';
+    var abs = mapAbs(s + (t || 0)), ns = Math.floor(abs + 1e-9);
+    return L(ns, abs - ns, cls, inner, u !== undefined ? mapAbs(u) : undefined, extra);
   }
   function P(d, attrs) { return '<path d="' + d + '" ' + (attrs || '') + '/>'; }
   function D(d, attrs) { return '<path pathLength="1" d="' + d + '" ' + (attrs || '') + '/>'; } // drawable
@@ -278,15 +300,15 @@
   // first floor slab + beam
   ext += layer(5, .28, 'wipe-x', R(292, 316, 416, 14, 'fill="' + CON2 + '" stroke="' + INK + '" stroke-width="1"'));
   // GF walls
-  ext += layer(5, .42, 'rise', P(bayPath('gf'), 'fill="url(#brick)" fill-rule="evenodd" stroke="' + INK + '" stroke-width=".8"'));
+  ext += L(6, .05, 'rise', P(bayPath('gf'), 'fill="url(#brick)" fill-rule="evenodd" stroke="' + INK + '" stroke-width=".8"'));
   // lintels
-  ext += layer(5, .48, 'fade', R(330, 362, 75, 6, 'fill="' + CON + '"') + R(595, 362, 75, 6, 'fill="' + CON + '"') + R(474, 372, 52, 6, 'fill="' + CON + '"'));
+  ext += L(6, .2, 'fade', R(330, 362, 75, 6, 'fill="' + CON + '"') + R(595, 362, 75, 6, 'fill="' + CON + '"') + R(474, 372, 52, 6, 'fill="' + CON + '"'));
   // FF columns
   COLS.forEach(function (x, i) {
     ext += layer(5, .56 + i * .04, 'rise', R(x - 8, FF[0], 16, FF[1] - FF[0], 'fill="' + CON + '" stroke="' + INK + '" stroke-width="1"'));
   });
   // FF walls
-  ext += layer(5, .78, 'rise', P(bayPath('ff'), 'fill="url(#brick)" fill-rule="evenodd" stroke="' + INK + '" stroke-width=".8"'));
+  ext += L(6, .45, 'rise', P(bayPath('ff'), 'fill="url(#brick)" fill-rule="evenodd" stroke="' + INK + '" stroke-width=".8"'));
   // scaffolding
   var sc = '<g stroke="#7d7d7d" stroke-width="1.3" fill="none">';
   [[262, 280], [720, 738]].forEach(function (p) {
@@ -297,7 +319,7 @@
   sc += '</g>';
   ext += layer(5, .6, 'fade', sc, 8.75);
   ext += layer(5, .35, 'fade', person(380, 316, { helmet: Y, shirt: '#3a4a5c', s: .8 }) + person(620, 316, { helmet: '#fff', shirt: '#fff', s: .8, hold: 'plan', dir: -1 }), 6.5);
-  ext += layer(5, .1, 'fade', person(220, GROUND, { helmet: Y, shirt: '#58606b', hold: 'reach' }), 6.8);
+  ext += layer(5, .05, 'fade', person(220, GROUND, { helmet: Y, shirt: '#58606b', hold: 'reach' }), 6.8);
 
   // --- Stage 6: roof & concrete ---------------------------------------
   var mesh = P('M292 181H708M292 186H708', 'stroke="#7b3f1d" stroke-width="1.4"');
@@ -341,13 +363,13 @@
   ext += layer(8, .05, 'rise slower', P(facadeHoles(), 'fill="#f7f5f0" fill-rule="evenodd" stroke="' + INK + '" stroke-width="1"'));
   ext += layer(8, .35, 'fade', P('M292 330H708M292 190H708', 'stroke="#d6d1c7" stroke-width="1"') + R(292, 160, 416, 10, 'fill="#2a2a2a"') + R(286, 455, 428, 15, 'fill="#3b3b3b"'));
   // paint: charcoal panel around centre FF bay, warm grey GF bay 1
-  ext += layer(8, .5, 'wipe-x', P(rectPath(441, 190, 559, 316) + rectPath(460, 225, 540, 300), 'fill="#2b2b2b" fill-rule="evenodd"') +
+  ext += L(10, 0, 'wipe-x', P(rectPath(441, 190, 559, 316) + rectPath(460, 225, 540, 300), 'fill="#2b2b2b" fill-rule="evenodd"') +
     P(rectPath(308, 330, 425, 455) + rectPath(335, 370, 400, 420), 'fill="#e6e0d6" fill-rule="evenodd"'));
   // window + door frames
   var frames = '';
   OPEN.gf.concat(OPEN.ff).forEach(function (o) { frames += R(o[0], o[1], o[2] - o[0], o[3] - o[1], 'fill="none" stroke="' + INK + '" stroke-width="2.4"'); });
   frames += P('M367.5 370V420M632.5 370V420M367.5 230V290M632.5 230V290M500 225V300', 'stroke="' + INK + '" stroke-width="1.4"');
-  ext += layer(8, .7, 'fade', frames);
+  ext += L(10, .15, 'fade', frames);
   // finishes inset
   var tilesG = '';
   for (var ti = 0; ti < 6; ti++) for (var tj = 0; tj < 3; tj++)
@@ -485,15 +507,8 @@
   int += layer(9, .8, 'fade', R(640, 460, 22, 28, 'fill="#e8e3d8" stroke="' + INK + '"') + P('M651 460q-14 -30 -4 -50q4 22 4 50q2 -26 14 -42q-2 24 -14 42', 'fill="#6f8f55" stroke="#3f5a33" stroke-width=".6"') +
     P('M480 512Q526 530 572 512', 'stroke="#c9a66b" stroke-width="5" fill="none" opacity=".5"'));
 
-  svg += '<g id="sceneInt" class="jx fade" data-s="9" data-t="0" data-u="10">' + int + '</g>';
+  svg += '<g id="sceneInt" class="jx fade" data-s="10" data-t="' + (INTERIOR_FROM - 10).toFixed(3) + '" data-u="11">' + int + '</g>';
 
-  var mount = document.getElementById('scene');
-  if (mount) {
-    mount.innerHTML = svg;
-    // Phones: crop the drawing to the building so it reads larger.
-    var mq = window.matchMedia('(max-width: 700px)');
-    var fit = function () { mount.setAttribute('viewBox', mq.matches ? '130 10 740 630' : '0 0 1000 640'); };
-    fit();
-    if (mq.addEventListener) mq.addEventListener('change', fit); else mq.addListener(fit);
-  }
-})();
+
+  return svg;
+}
